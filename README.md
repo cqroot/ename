@@ -17,11 +17,13 @@
 
 ## Installation
 
+Clone this repository, or just download the ename file:
+
 ```bash
 git clone git@github.com:cqroot/ename.git
 ```
 
-Then add the ename directory to your PATH or environment variable.
+Then add the directory where the ename file is located to your PATH or environment variable.
 
 ## Usage
 
