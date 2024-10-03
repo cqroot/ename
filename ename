@@ -1,0 +1,180 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+from __future__ import print_function
+import os
+import subprocess
+import sys
+
+RENAME_TMP_FILE = ".ename.tmp"
+EDITOR = os.environ.get("EDITOR", "vim")
+
+
+def show_version():
+    print("ename v0.0.1")
+
+
+def show_help():
+    print(
+        """Use your favorite editor to batch rename files and directories.
+
+Notice:
+1. Do not add or subtract lines.
+2. Unchanged lines are ignored.
+
+Usage:
+  edname [flags]
+
+Flags:
+  -h, --help             help for ename
+  -v, --version          print ename version"""
+    )
+
+
+class Color(object):
+    @staticmethod
+    def fg_black(s):
+        return "\033[30m%s\033[0m" % s
+
+    @staticmethod
+    def fg_red(s):
+        return "\033[31m%s\033[0m" % s
+
+    @staticmethod
+    def fg_green(s):
+        return "\033[32m%s\033[0m" % s
+
+    @staticmethod
+    def fg_yellow(s):
+        return "\033[33m%s\033[0m" % s
+
+    @staticmethod
+    def fg_blue(s):
+        return "\033[34m%s\033[0m" % s
+
+    @staticmethod
+    def fg_magenta(s):
+        return "\033[35m%s\033[0m" % s
+
+    @staticmethod
+    def fg_cyan(s):
+        return "\033[36m%s\033[0m" % s
+
+    @staticmethod
+    def fg_white(s):
+        return "\033[37m%s\033[0m" % s
+
+    @staticmethod
+    def bg_black(s):
+        return "\033[40m%s\033[0m" % s
+
+    @staticmethod
+    def bg_red(s):
+        return "\033[41m%s\033[0m" % s
+
+    @staticmethod
+    def bg_green(s):
+        return "\033[42m%s\033[0m" % s
+
+    @staticmethod
+    def bg_yellow(s):
+        return "\033[43m%s\033[0m" % s
+
+    @staticmethod
+    def bg_blue(s):
+        return "\033[44m%s\033[0m" % s
+
+    @staticmethod
+    def bg_magenta(s):
+        return "\033[45m%s\033[0m" % s
+
+    @staticmethod
+    def bg_cyan(s):
+        return "\033[46m%s\033[0m" % s
+
+    @staticmethod
+    def bg_white(s):
+        return "\033[47m%s\033[0m" % s
+
+
+def print_error(msg):
+    print("%s %s" % (Color.fg_red("ERROR:"), msg))
+
+
+def gen_rename_tmp(files):
+    with open(RENAME_TMP_FILE, "w") as f:
+        for file in files:
+            f.write("%s\n" % file)
+        f.flush()
+    subprocess.call([EDITOR, RENAME_TMP_FILE])
+
+
+def remove_rename_tmp():
+    os.remove(RENAME_TMP_FILE)
+
+
+def get_new_names():
+    new_names = []
+
+    with open(RENAME_TMP_FILE, "r") as f:
+        for line in f.readlines():
+            if line.rstrip() == RENAME_TMP_FILE:
+                continue
+            new_names.append(line.rstrip())
+
+    return new_names
+
+
+def batch_rename(old_names, new_names):
+    if len(old_names) != len(new_names):
+        print_error("The number of new file names is inconsistent with the original")
+        return 1
+
+    rename_pairs = []
+
+    for i in range(len(old_names)):
+        if old_names[i] == new_names[i]:
+            continue
+        rename_pairs.append({"old": old_names[i], "new": new_names[i]})
+
+    for rename_pair in rename_pairs:
+        print("%-20s  ->  %s" % (rename_pair["old"], rename_pair["new"]))
+
+    confirm_text = input("Confirm to rename the above file [y/N] ")
+
+    if confirm_text != "y" and confirm_text != "Y":
+        return 1
+
+    for rename_pair in rename_pairs:
+        os.rename(
+            os.path.join(".", rename_pair["old"]), os.path.join(".", rename_pair["new"])
+        )
+
+    return 0
+
+
+def main():
+    old_names = sorted(os.listdir("."))
+    if len(old_names) == 0:
+        print_error("There are no files in the current directory")
+        return 1
+
+    gen_rename_tmp(old_names)
+    new_names = get_new_names()
+
+    ret = batch_rename(old_names, new_names)
+    remove_rename_tmp()
+
+    return ret
+
+
+if __name__ == "__main__":
+    if len(sys.argv) > 1:
+        if sys.argv[1] == "-h" or sys.argv[1] == "--help":
+            show_help()
+            exit(0)
+        if sys.argv[1] == "-v" or sys.argv[1] == "--version":
+            show_version()
+            exit(0)
+
+    exit(main())
