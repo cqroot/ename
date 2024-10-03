@@ -80,10 +80,10 @@ class Color(object):
 
 
 class RenameOptions:
-    def __init__(self):
-        self.__file_only = False
-        self.__directory_only = False
-        self.__all = False
+    def __init__(self, file_only=False, directory_only=False, show_hidden_files=False):
+        self.__file_only = file_only
+        self.__directory_only = directory_only
+        self.__show_hidden_files = show_hidden_files
         pass
 
     def file_only(self):
@@ -98,11 +98,11 @@ class RenameOptions:
     def set_directory_only(self, value):
         self.__directory_only = value
 
-    def all(self):
-        return self.__all
+    def show_hidden_files(self):
+        return self.__show_hidden_files
 
-    def set_all(self, value):
-        self.__all = value
+    def set_show_hidden_files(self, value):
+        self.__show_hidden_files = value
 
 
 RENAME_OPTIONS = RenameOptions()
@@ -194,12 +194,12 @@ def batch_rename(rename_pairs):
     return 0
 
 
-def start_rename(old_names, new_names):
+def gen_rename_pairs(old_names, new_names):
     if len(old_names) != len(new_names):
         print_error("The number of new item names is inconsistent with the original")
         print("    old_name_count: %d, old_names: %s" % (len(old_names), old_names))
         print("    new_name_count: %d, new_names: %s" % (len(new_names), new_names))
-        return 1
+        return 1, []
 
     rename_pairs = []
 
@@ -208,6 +208,29 @@ def start_rename(old_names, new_names):
             continue
         rename_pairs.append({"old": old_names[i], "new": new_names[i]})
 
+    return 0, rename_pairs
+
+
+def filter_files(working_dir, rename_options=RenameOptions()):
+    __files = []
+    for file in sorted(os.listdir(working_dir)):
+        abs_file = os.path.join(working_dir, file)
+        if rename_options.directory_only() and not os.path.isdir(abs_file):
+            continue
+        if rename_options.file_only() and not os.path.isfile(abs_file):
+            continue
+        if not rename_options.show_hidden_files() and file[0] == ".":
+            continue
+        __files.append(file)
+    return __files
+
+
+def start_rename(old_names):
+    new_names = get_new_names()
+
+    ret, rename_pairs = gen_rename_pairs(old_names, new_names)
+    if ret != 0:
+        return ret
     if len(rename_pairs) == 0:
         print("No items need to be renamed")
         return 0
@@ -216,27 +239,14 @@ def start_rename(old_names, new_names):
 
 
 def main():
-    old_names = []
-    for old_name in sorted(os.listdir(os.getcwd())):
-        abs_old_name = os.path.join(os.getcwd(), old_name)
-        if RENAME_OPTIONS.directory_only() and not os.path.isdir(abs_old_name):
-            continue
-        if RENAME_OPTIONS.file_only() and not os.path.isfile(abs_old_name):
-            continue
-        if not RENAME_OPTIONS.all() and old_name[0] == ".":
-            continue
-        old_names.append(old_name)
-
+    old_names = filter_files(os.getcwd(), RENAME_OPTIONS)
     if len(old_names) == 0:
         print_error("No items to rename")
         return 1
 
     gen_rename_tmp(old_names)
-    new_names = get_new_names()
-
-    ret = start_rename(old_names, new_names)
+    ret = start_rename(old_names)
     remove_rename_tmp()
-
     return ret
 
 
@@ -260,7 +270,7 @@ if __name__ == "__main__":
             continue
 
         if arg == "-a" or arg == "--all":
-            RENAME_OPTIONS.set_all(True)
+            RENAME_OPTIONS.set_show_hidden_files(True)
             continue
 
     exit(main())
