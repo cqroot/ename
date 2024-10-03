@@ -128,6 +128,8 @@ def get_new_names():
 def batch_rename(old_names, new_names):
     if len(old_names) != len(new_names):
         print_error("The number of new file names is inconsistent with the original")
+        print("    old_name_count: %d, old_names: %s" % (len(old_names), old_names))
+        print("    new_name_count: %d, new_names: %s" % (len(new_names), new_names))
         return 1
 
     rename_pairs = []
@@ -137,10 +139,26 @@ def batch_rename(old_names, new_names):
             continue
         rename_pairs.append({"old": old_names[i], "new": new_names[i]})
 
+    max_name_len = 0
     for rename_pair in rename_pairs:
-        print("%-20s  ->  %s" % (rename_pair["old"], rename_pair["new"]))
+        if len(rename_pair["old"]) > max_name_len:
+            max_name_len = len(rename_pair["old"])
+    print(max_name_len)
+    for rename_pair in rename_pairs:
+        print(
+            "%s%s  ->  %s"
+            % (
+                rename_pair["old"],
+                " " * (max_name_len - len(rename_pair["old"])),
+                rename_pair["new"],
+            )
+        )
 
-    confirm_text = input("Confirm to rename the above file [y/N] ")
+    confirm_text = ""
+    if sys.version_info[0] == 2:
+        confirm_text = raw_input("Confirm to rename the above file [y/N] ")
+    else:
+        confirm_text = input("Confirm to rename the above file [y/N] ")
 
     if confirm_text != "y" and confirm_text != "Y":
         return 1
