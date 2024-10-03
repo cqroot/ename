@@ -1,7 +1,18 @@
 <div align="center">
   <h1>📜 ENAME</h1>
   <i>Use your favorite editor to batch rename files and directories.</i>
-  <hr>
+
+  <p>
+    <a href="https://github.com/cqroot/ename/actions">
+      <img src="https://github.com/cqroot/ename/workflows/test/badge.svg" alt="Action Status" />
+    </a>
+    <a href="https://github.com/cqroot/ename/blob/main/LICENSE">
+      <img src="https://img.shields.io/github/license/cqroot/ename" />
+    </a>
+    <a href="https://github.com/cqroot/ename/issues">
+      <img src="https://img.shields.io/github/issues/cqroot/ename" />
+    </a>
+  </p>
 </div>
 
 ## Installation
