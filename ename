@@ -9,6 +9,9 @@ import sys
 RENAME_TMP_FILE = ".ename.tmp"
 EDITOR = os.environ.get("EDITOR", "vim")
 
+PY2 = sys.version_info[0] == 2
+PY3 = sys.version_info[0] == 3
+
 
 class Color(object):
     @staticmethod
@@ -134,7 +137,8 @@ def print_error(msg):
 
 
 def gen_rename_tmp(files):
-    with open(RENAME_TMP_FILE, "w") as f:
+    open_args = {"encoding": "utf-8"} if PY3 else {}
+    with open(RENAME_TMP_FILE, "w", **open_args) as f:
         for file in files:
             f.write("%s\n" % file)
         f.flush()
@@ -148,7 +152,8 @@ def remove_rename_tmp():
 def get_new_names():
     new_names = []
 
-    with open(RENAME_TMP_FILE, "r") as f:
+    open_args = {"encoding": "utf-8"} if PY3 else {}
+    with open(RENAME_TMP_FILE, "r", **open_args) as f:
         for line in f.readlines():
             if line.rstrip() == RENAME_TMP_FILE:
                 continue
@@ -174,7 +179,7 @@ def batch_rename(rename_pairs):
         )
 
     confirm_text = ""
-    if sys.version_info[0] == 2:
+    if PY2:
         confirm_text = raw_input("Confirm to rename the above file [y/N] ")
     else:
         confirm_text = input("Confirm to rename the above file [y/N] ")
