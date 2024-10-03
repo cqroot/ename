@@ -139,11 +139,13 @@ def batch_rename(old_names, new_names):
             continue
         rename_pairs.append({"old": old_names[i], "new": new_names[i]})
 
+    if len(rename_pairs) == 0:
+        return 0
+
     max_name_len = 0
     for rename_pair in rename_pairs:
         if len(rename_pair["old"]) > max_name_len:
             max_name_len = len(rename_pair["old"])
-    print(max_name_len)
     for rename_pair in rename_pairs:
         print(
             "%s%s  ->  %s"
