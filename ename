@@ -105,9 +105,6 @@ class RenameOptions:
         self.__show_hidden_files = value
 
 
-RENAME_OPTIONS = RenameOptions()
-
-
 def show_version():
     print("ename v0.0.1")
 
@@ -239,7 +236,29 @@ def start_rename(old_names):
 
 
 def main():
-    old_names = filter_files(os.getcwd(), RENAME_OPTIONS)
+    options = RenameOptions()
+    for arg in sys.argv[1:]:
+        if arg == "-h" or arg == "--help":
+            show_help()
+            exit(0)
+
+        if arg == "-v" or arg == "--version":
+            show_version()
+            exit(0)
+
+        if arg == "-f" or arg == "--file-only":
+            options.set_file_only(True)
+            continue
+
+        if arg == "-d" or arg == "--directory-only":
+            options.set_directory_only(True)
+            continue
+
+        if arg == "-a" or arg == "--all":
+            options.set_show_hidden_files(True)
+            continue
+
+    old_names = filter_files(os.getcwd(), options)
     if len(old_names) == 0:
         print_error("No items to rename")
         return 1
@@ -251,26 +270,4 @@ def main():
 
 
 if __name__ == "__main__":
-
-    for arg in sys.argv[1:]:
-        if arg == "-h" or arg == "--help":
-            show_help()
-            exit(0)
-
-        if arg == "-v" or arg == "--version":
-            show_version()
-            exit(0)
-
-        if arg == "-f" or arg == "--file-only":
-            RENAME_OPTIONS.set_file_only(True)
-            continue
-
-        if arg == "-d" or arg == "--directory-only":
-            RENAME_OPTIONS.set_directory_only(True)
-            continue
-
-        if arg == "-a" or arg == "--all":
-            RENAME_OPTIONS.set_show_hidden_files(True)
-            continue
-
     exit(main())
