@@ -10,27 +10,6 @@ RENAME_TMP_FILE = ".ename.tmp"
 EDITOR = os.environ.get("EDITOR", "vim")
 
 
-def show_version():
-    print("ename v0.0.1")
-
-
-def show_help():
-    print(
-        """Use your favorite editor to batch rename files and directories.
-
-Notice:
-1. Do not add or subtract lines.
-2. Unchanged lines are ignored.
-
-Usage:
-  edname [flags]
-
-Flags:
-  -h, --help             help for ename
-  -v, --version          print ename version"""
-    )
-
-
 class Color(object):
     @staticmethod
     def fg_black(s):
@@ -97,6 +76,59 @@ class Color(object):
         return "\033[47m%s\033[0m" % s
 
 
+class RenameOptions:
+    def __init__(self):
+        self.__file_only = False
+        self.__directory_only = False
+        self.__all = False
+        pass
+
+    def file_only(self):
+        return self.__file_only
+
+    def set_file_only(self, value):
+        self.__file_only = value
+
+    def directory_only(self):
+        return self.__directory_only
+
+    def set_directory_only(self, value):
+        self.__directory_only = value
+
+    def all(self):
+        return self.__all
+
+    def set_all(self, value):
+        self.__all = value
+
+
+RENAME_OPTIONS = RenameOptions()
+
+
+def show_version():
+    print("ename v0.0.1")
+
+
+def show_help():
+    print(
+        """Use your favorite editor to batch rename files and directories.
+
+Notice:
+1. Do not add or subtract lines.
+2. Unchanged lines are ignored.
+
+Usage:
+  edname [flags]
+
+Flags:
+  -f, --file-only        rename file only
+  -d, --directory-only   rename directory only
+  -a, --all              do not ignore entries starting with .
+  -h, --help             help for ename
+  -v, --version          print ename version"""
+    )
+
+
 def print_error(msg):
     print("%s %s" % (Color.fg_red("ERROR:"), msg))
 
@@ -159,7 +191,7 @@ def batch_rename(rename_pairs):
 
 def start_rename(old_names, new_names):
     if len(old_names) != len(new_names):
-        print_error("The number of new file names is inconsistent with the original")
+        print_error("The number of new item names is inconsistent with the original")
         print("    old_name_count: %d, old_names: %s" % (len(old_names), old_names))
         print("    new_name_count: %d, new_names: %s" % (len(new_names), new_names))
         return 1
@@ -172,16 +204,26 @@ def start_rename(old_names, new_names):
         rename_pairs.append({"old": old_names[i], "new": new_names[i]})
 
     if len(rename_pairs) == 0:
-        print("No files to rename")
+        print("No items need to be renamed")
         return 0
 
     return batch_rename(rename_pairs)
 
 
 def main():
-    old_names = sorted(os.listdir("."))
+    old_names = []
+    for old_name in sorted(os.listdir(os.getcwd())):
+        abs_old_name = os.path.join(os.getcwd(), old_name)
+        if RENAME_OPTIONS.directory_only() and not os.path.isdir(abs_old_name):
+            continue
+        if RENAME_OPTIONS.file_only() and not os.path.isfile(abs_old_name):
+            continue
+        if not RENAME_OPTIONS.all() and old_name[0] == ".":
+            continue
+        old_names.append(old_name)
+
     if len(old_names) == 0:
-        print_error("There are no files in the current directory")
+        print_error("No items to rename")
         return 1
 
     gen_rename_tmp(old_names)
@@ -194,12 +236,26 @@ def main():
 
 
 if __name__ == "__main__":
-    if len(sys.argv) > 1:
-        if sys.argv[1] == "-h" or sys.argv[1] == "--help":
+
+    for arg in sys.argv[1:]:
+        if arg == "-h" or arg == "--help":
             show_help()
             exit(0)
-        if sys.argv[1] == "-v" or sys.argv[1] == "--version":
+
+        if arg == "-v" or arg == "--version":
             show_version()
             exit(0)
+
+        if arg == "-f" or arg == "--file-only":
+            RENAME_OPTIONS.set_file_only(True)
+            continue
+
+        if arg == "-d" or arg == "--directory-only":
+            RENAME_OPTIONS.set_directory_only(True)
+            continue
+
+        if arg == "-a" or arg == "--all":
+            RENAME_OPTIONS.set_all(True)
+            continue
 
     exit(main())
